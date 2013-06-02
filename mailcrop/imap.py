@@ -78,5 +78,25 @@ class Imap(object):
         val, ss, ts = data.split()
         return CopyResult(val, ss, ts)
 
-    def uid_indirect_move(self, message_set, mailbox):
-        return self._uid('copy', message_set, mailbox)
+    def store(self, message_set, *args):
+        #XXX result type
+        return self._uid('store', message_set, *args)
+
+
+    def add_flags(self, message_set, *flags):
+        self.store(message_set, '+FLAG', flags)
+
+    def selective_expunge(self, message_set):
+        assert message_set
+        #XXX: result type
+        return self._uid('EXPUNGE', message_set)
+
+    def indirect_move(self, message_set, mailbox):
+        copy_result = self.copy(message_set, mailbox)
+        store_result = self.add_flags(copy_result.source_set, '\\Deleted')
+        self.selective_expunge(copy_result.source_set)
+        return copy_result
+
+    def move(self, message_set, mailbox):
+        #XXX UIDMOVE cap
+        return self.indirect_move(message_set, mailbox)
