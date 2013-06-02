@@ -82,9 +82,9 @@ class Imap(object):
         #XXX result type
         return self._uid('store', message_set, *args)
 
-
     def add_flags(self, message_set, *flags):
-        self.store(message_set, '+FLAG', flags)
+        #XXX result parser
+        return self.store(message_set, '+FLAG', flags)
 
     def selective_expunge(self, message_set):
         assert message_set
