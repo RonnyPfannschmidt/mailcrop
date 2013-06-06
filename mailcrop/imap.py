@@ -97,6 +97,9 @@ class Imap(object):
         self.selective_expunge(copy_result.source_set)
         return copy_result
 
+    def direct_move(message_set, mailbox):
+        result = self._uid('move', message_set, mailbox)
+
     def move(self, message_set, mailbox):
-        #XXX UIDMOVE cap
+        assert 'MOVE' in self.capabilities
         return self.indirect_move(message_set, mailbox)

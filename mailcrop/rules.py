@@ -1,3 +1,5 @@
+from . import matching
+
 class Rule(object):
     def __init__(self, name,*,matcher, target=None, flags=None):
         self.name = name
@@ -13,3 +15,11 @@ class Rule(object):
             imap.add_flags(messages, self.flags)
         if self.target:
             imap.move(messages, self.target)
+
+
+class MailingList(Rule):
+    def __init__(self, name, ml, target, *, flags=None):
+        super.__init__(name,
+                       matcher=matching.ML(name),
+                       target=target,
+                       flags=None)
