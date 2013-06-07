@@ -1,19 +1,15 @@
 from mailcrop.imap import connect
-from mailcrop.matching import Ml, OR
+from mailcrop.rules import MailingList as ML, Rule as R
 
 
-matchers = (
-    Ml('testing-in-python@'),
-    Ml('python-ideas@')
-)
+rules = [
+    ML('pypy-dev', 'pypy-dev@python.org', "Mailing Listen.python.pypy-dev"),
+    ML('python-ideas','python-ideas@python.org','Mailing Listen.python.ideas'),
+    ML('couchdb-dev','dev@couchdb.apache.org','Mailing Listen.couch-dev'),
+    ML('distutils sig', 'distutils-sig@python.org', 'Mailing Listen.python.distutils'),
+    ML('hg dev','mercurial-devel@selenic.com','Mailing Listen.mercurial-devel'),
+]
+
 imap = connect(command='ssh us ./bin/imap')
-print(imap.capabilities)
 imap.select()
-for matcher in matchers:
-    print(matcher.to_imap())
-    result = imap.search(matcher)
-    print(matcher, result)
-    copy_result = imap.copy(result, 'test2')
-    import pdb
-    pdb.set_trace()
-    print(copy_result)
+imap.apply_rules(rules)

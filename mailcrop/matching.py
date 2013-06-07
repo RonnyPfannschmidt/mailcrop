@@ -11,6 +11,9 @@ class Matcher(metaclass=ABCMeta):
     def to_imap(self):
         pass
 
+    def __repr__(self):
+        return '<Match %s>' % self.to_imap()
+
 
 class Header(Matcher):
     def __init__(self, header, substring):
@@ -45,7 +48,7 @@ class OR(Matcher):
 class Ml(OR):
     def __init__(self, ml):
         self.ml = ml
-        super().__init__(
+        super(Ml, self).__init__(
             Header('List-Post', ml),
             Simple('TO', ml),
             Simple('CC', ml),

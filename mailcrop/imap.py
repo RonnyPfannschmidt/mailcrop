@@ -1,6 +1,8 @@
 import imaplib
 from collections import namedtuple
 
+imaplib.Commands['MOVE'] = ('SELECTED',)
+
 
 def connect(*, command):
     """
@@ -24,17 +26,20 @@ def _args_to_imap(args):
 
 class MessageList(list):
     def __init__(self, raw):
-        if isinstance(raw, bytes):
-            super().__init__(map(int, raw.split(b' ')))
-        else:
-            super().__init__(raw)
+        if not raw:
+            raw = ()
+        elif isinstance(raw, bytes):
+            raw = map(int, raw.split(b' '))
+        super().__init__(raw)
 
     def to_imap(self):
         assert self, 'empty messageset breaks'
         return ','.join(map(str, self))
 
+
 class MessageSet(str):
     pass
+
 
 CopyResult = namedtuple('CopyResult', [
     'target_uidvalidity',
@@ -51,30 +56,40 @@ class ImapError(Exception):
 
 
 class Imap(object):
-    "sanity wrapper around imaplib"
-    def __init__(self, fsck_imap):
-        self.fsck_imap = fsck_imap
-        self.capabilities = set(fsck_imap.capabilities)
+    """
+    sanity wrapper around <imaplib>
+    """
+
+    def __init__(self, _imap: imaplib.IMAP4):
+        self._imap = _imap
+        self.capabilities = set(_imap.capabilities)
+        self.untagged_responses = _imap.untagged_responses
         assert 'UIDPLUS' in self.capabilities
 
     def select(self, mailbox='INBOX'):
-        ok, result = self.fsck_imap.select(mailbox)
+        ok, result = self._imap.select(mailbox)
         ImapError.maybe_raise(ok, result)
 
     def _uid(self, command, *args):
         args = _args_to_imap(args)
-        ok, result = self.fsck_imap.uid(command, *args)
+        ok, result = self._imap.uid(command, *args)
         ImapError.maybe_raise(ok, result)
         return result
 
     def search(self, *args):
+        """
+        do an imap search
+
+        :param args: imap search parameters
+        :return: MessageList of results
+        """
         result = self._uid('search', *args)
         return MessageList(*result)
 
     def copy(self, message_set, mailbox):
         result = self._uid('copy', message_set, mailbox)
         assert result == [None]
-        data, = self.fsck_imap.untagged_responses.pop('COPYUID')
+        data, = self._imap.untagged_responses.pop('COPYUID')
         val, ss, ts = data.split()
         return CopyResult(val, ss, ts)
 
@@ -97,9 +112,13 @@ class Imap(object):
         self.selective_expunge(copy_result.source_set)
         return copy_result
 
-    def direct_move(message_set, mailbox):
-        result = self._uid('move', message_set, mailbox)
+    def direct_move(self, message_set, mailbox):
+        result = self._uid('move', message_set, self._imap._quote(mailbox))
 
     def move(self, message_set, mailbox):
         assert 'MOVE' in self.capabilities
-        return self.indirect_move(message_set, mailbox)
+        return self.direct_move(message_set, mailbox)
+
+    def apply_rules(self, rules):
+        for rule in rules:
+            rule.apply_mailbox(self)
