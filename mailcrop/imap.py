@@ -67,7 +67,7 @@ class Imap(object):
         assert 'UIDPLUS' in self.capabilities
 
     def select(self, mailbox='INBOX'):
-        ok, result = self._imap.select(mailbox)
+        ok, result = self._imap.select(self._imap._quote(mailbox))
         ImapError.maybe_raise(ok, result)
 
     def _uid(self, command, *args):

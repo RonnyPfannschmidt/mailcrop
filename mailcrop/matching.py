@@ -46,12 +46,11 @@ class OR(Matcher):
 
 
 class Ml(OR):
-    def __init__(self, ml):
+    def __init__(self, ml: str):
         self.ml = ml
-        super(Ml, self).__init__(
+        super().__init__(
             Header('List-Post', ml),
-            Simple('TO', ml),
             Simple('CC', ml),
         )
 
-    __repr__ = FormatRepr('<Match ml {ml}>')
+    __repr__ = FormatRepr('<Match ml {ml!r}>')
