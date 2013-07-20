@@ -66,6 +66,9 @@ class Imap(object):
         self.untagged_responses = _imap.untagged_responses
         assert 'UIDPLUS' in self.capabilities
 
+    def bye(self):
+        return self._imap.logout()
+
     def select(self, mailbox='INBOX'):
         ok, result = self._imap.select(self._imap._quote(mailbox))
         ImapError.maybe_raise(ok, result)

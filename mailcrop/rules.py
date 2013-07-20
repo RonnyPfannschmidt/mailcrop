@@ -11,8 +11,6 @@ class Rule(object):
     def apply_mailbox(self, imap):
         "apply this rule on the currently selected mailbox"
         messages = imap.search(self.matcher)
-        if __debug__:
-            print(self.matcher, messages)
         if not messages:
             return
         if self.flags:
